@@ -21,14 +21,12 @@ router.post('/forgot-password', async (req, res) => {
             return res.status(404).json({ message: 'Email non trouvé !' });
         }
 
-        // Créer un token de réinitialisation
         const resetToken = crypto.randomBytes(32).toString('hex');
         user.resetToken = resetToken;
-        user.resetTokenExpiry = Date.now() + 3600000; // 1 heure
-        await user.save({ validateBeforeSave: false});
+        user.resetTokenExpiry = Date.now() + 3600000;
+        await user.save({ validateBeforeSave: false });
 
-        // Envoyer l'email
-        const resetUrl = `http://127.0.0.1:5500/Projets%20volkeno%201/Projet-volkeno1/reset-password.html?token=${resetToken}`;
+        const resetUrl = `https://github.com/bousso6/red-product-frontend.git/reset-password.html?token=${resetToken}`;
         
         await transporter.sendMail({
             from: process.env.EMAIL,
@@ -49,9 +47,6 @@ router.post('/forgot-password', async (req, res) => {
     }
 });
 
-module.exports = router;
-
-
 // POST - Réinitialiser le mot de passe
 router.post('/reset-password', async (req, res) => {
     try {
@@ -64,7 +59,6 @@ router.post('/reset-password', async (req, res) => {
             return res.status(400).json({ message: 'Token invalide ou expiré !' });
         }
 
-        // Chiffrer le nouveau mot de passe
         const bcrypt = require('bcryptjs');
         const salt = await bcrypt.genSalt(10);
         user.mot_de_passe = await bcrypt.hash(req.body.mot_de_passe, salt);
@@ -78,3 +72,5 @@ router.post('/reset-password', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
+module.exports = router;
