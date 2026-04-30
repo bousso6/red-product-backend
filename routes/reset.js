@@ -74,3 +74,41 @@ router.post('/reset-password', async (req, res) => {
 });
 
 module.exports = router;
+
+
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.body.email });
+        if (!user) {
+            return res.status(404).json({ message: 'Email non trouvé !' });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        user.resetToken = resetToken;
+        user.resetTokenExpiry = Date.now() + 3600000;
+        await user.save({ validateBeforeSave: false });
+
+        const resetUrl = `https://bousso6.github.io/red-product-frontend/reset-password.html?token=${resetToken}`;
+        
+        console.log('Tentative envoi email à:', user.email);
+        console.log('EMAIL config:', process.env.EMAIL);
+        
+        await transporter.sendMail({
+            from: process.env.EMAIL,
+            to: user.email,
+            subject: 'Réinitialisation de mot de passe - RED PRODUCT',
+            html: `
+                <h2>Réinitialisation de mot de passe</h2>
+                <p>Clique sur le lien ci-dessous pour réinitialiser ton mot de passe :</p>
+                <a href="${resetUrl}">Réinitialiser mon mot de passe</a>
+                <p>Ce lien expire dans 1 heure.</p>
+            `
+        });
+
+        res.json({ message: 'Email envoyé avec succès !' });
+
+    } catch (err) {
+        console.error('ERREUR:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
