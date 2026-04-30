@@ -26,7 +26,7 @@ router.post('/forgot-password', async (req, res) => {
         user.resetTokenExpiry = Date.now() + 3600000;
         await user.save({ validateBeforeSave: false });
 
-        const resetUrl = `https://github.com/bousso6/red-product-frontend.git/reset-password.html?token=${resetToken}`;
+        const resetUrl = `https://bousso6.github.io/red-product-frontend/reset-password.html?token=${resetToken}`;
         
         await transporter.sendMail({
             from: process.env.EMAIL,
