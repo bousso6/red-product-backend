@@ -13,10 +13,20 @@ const UserSchema = new mongoose.Schema({
     mot_de_passe: {
         type: String,
         required: true
+    },
+    resetToken: {
+        type: String
+    },
+    resetTokenExpiry: {
+        type: Date
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    verificationToken: {
+        type: String
     }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);
-
-resetToken: { type: String }
-resetTokenExpiry: { type: Date };
