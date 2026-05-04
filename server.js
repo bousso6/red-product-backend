@@ -7,20 +7,23 @@ require('dotenv').config();
 
 const app = express();
 
+// --- ✅ CORS CONFIGURATION (IMPORTANT) ---
+app.use(cors({
+    origin: "https://bousso6.github.io",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
+
 // --- MIDDLEWARES ---
-app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
-// Permet de rendre le dossier 'uploads' accessible publiquement pour voir les images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- CONFIGURATION DE STORAGE POUR MULTER ---
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Les images seront stockées dans le dossier 'uploads'
+        cb(null, 'uploads/');
     },
     filename: (req, file, cb) => {
-        // On donne un nom unique au fichier : date + nom d'origine
         cb(null, Date.now() + '-' + file.originalname);
     }
 });
@@ -29,9 +32,9 @@ const upload = multer({ storage: storage });
 // --- CONNEXION MONGODB ---
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/red-product')
     .then(() => console.log('✅ MongoDB connecté !'))
-    .catch(err => console.error('❌ Erreur de connexion MongoDB:', err));
+    .catch(err => console.error('❌ Erreur MongoDB:', err));
 
-// --- MODÈLE DE DONNÉES ---
+// --- MODÈLE ---
 const HotelSchema = new mongoose.Schema({
     nom: String,
     adresse: String,
@@ -39,13 +42,11 @@ const HotelSchema = new mongoose.Schema({
     telephone: String,
     prix: Number,
     devise: String,
-    photo: String // Stockera le chemin de l'image (ex: "uploads/12345.jpg")
+    photo: String
 });
 const Hotel = mongoose.model('Hotel', HotelSchema);
 
-// --- ROUTES API ---
-
-// 1. Récupérer tous les hôtels
+// --- ROUTES ---
 app.get('/api/hotels', async (req, res) => {
     try {
         const hotels = await Hotel.find();
@@ -55,8 +56,6 @@ app.get('/api/hotels', async (req, res) => {
     }
 });
 
-// 2. Créer un nouvel hôtel (avec upload d'image)
-// 'photo' ici doit correspondre au nom utilisé dans formData.append('photo', ...)
 app.post('/api/hotels', upload.single('photo'), async (req, res) => {
     try {
         const newHotel = new Hotel({
@@ -66,7 +65,6 @@ app.post('/api/hotels', upload.single('photo'), async (req, res) => {
             telephone: req.body.telephone,
             prix: req.body.prix,
             devise: req.body.devise,
-            // On enregistre le chemin du fichier si une image a été envoyée
             photo: req.file ? req.file.path : 'uploads/default.jpg'
         });
 
@@ -77,16 +75,15 @@ app.post('/api/hotels', upload.single('photo'), async (req, res) => {
     }
 });
 
-// --- DÉMARRAGE DU SERVEUR ---
+// --- ROUTES AUTH ---
+const authRoutes = require('./routes/auth');
+const resetRoutes = require('./routes/reset');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/auth', resetRoutes);
+
+// --- START SERVER ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Serveur démarré sur le port ${PORT}`);
+    console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });
-
-const authRoutes = require('./routes/auth');
-
-// Ajoute cette ligne avec les autres routes
-app.use('/api/auth', authRoutes);
-
-const resetRoutes = require('./routes/reset');
-app.use('/api/auth', resetRoutes);
