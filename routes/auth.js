@@ -6,9 +6,11 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
-// Configurer nodemailer
+// Configurer nodemailer avec Brevo
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    secure: false,
     auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASSWORD
@@ -41,7 +43,7 @@ router.post('/register', async (req, res) => {
         const verifyUrl = `https://bousso6.github.io/red-product-frontend/verify.html?token=${verificationToken}`;
 
         await transporter.sendMail({
-            from: process.env.EMAIL,
+            from: `RED PRODUCT <${process.env.BREVO_EMAIL}>`,
             to: user.email,
             subject: 'Activation de votre compte - RED PRODUCT',
             html: `
@@ -55,6 +57,7 @@ router.post('/register', async (req, res) => {
         res.status(201).json({ message: 'Compte créé ! Vérifiez votre email pour activer votre compte.' });
 
     } catch (err) {
+        console.error('ERREUR REGISTER:', err);
         res.status(500).json({ message: err.message });
     }
 });
@@ -67,7 +70,6 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Email ou mot de passe incorrect !' });
         }
 
-        // Vérifier si le compte est activé
         if (!user.isVerified) {
             return res.status(400).json({ message: 'Veuillez activer votre compte via l\'email envoyé !' });
         }
