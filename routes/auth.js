@@ -27,7 +27,6 @@ router.post('/register', async (req, res) => {
 
         const salt = await bcrypt.genSalt(10);
         const motDePasseChiffre = await bcrypt.hash(req.body.mot_de_passe, salt);
-
         const verificationToken = crypto.randomBytes(32).toString('hex');
 
         const user = new User({
@@ -43,7 +42,7 @@ router.post('/register', async (req, res) => {
         const verifyUrl = `https://bousso6.github.io/red-product-frontend/verify.html?token=${verificationToken}`;
 
         await transporter.sendMail({
-            from: `RED PRODUCT <${process.env.BREVO_EMAIL}>`,
+            from: `RED PRODUCT <${process.env.EMAIL}>`,
             to: user.email,
             subject: 'Activation de votre compte - RED PRODUCT',
             html: `
